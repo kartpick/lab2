@@ -18,18 +18,39 @@ void run_posix_mode(int amount_of_signals) {
 		perror("Ошибка: не удается обработать сигнал SIGRTMIN");
 	}
 
+	int j = 0;
+	for (j = 0; j < SIGRTMAX; j++) {
+		sigaction(SIGRTMIN + j, &sa, NULL);
+	}
+
 	pid_t pid = fork();
 	if (pid == 0) {
 		// Child-процесс
 		int i = 0;
 
+		int range = 1 + SIGRTMAX - SIGRTMIN;
+		int buckets = RAND_MAX / range;
+		int limit = buckets * range;
+
 		for (i = 0; i < amount_of_signals; ++i) {
 			union sigval value;
+
+			int r_signal;
+			do {
+				r_signal = rand();
+			} while (r_signal >= limit);
+
+			r_signal = SIGRTMIN + (r_signal / buckets);
+
 			value.sival_int = rand();
 
-			sigqueue(getppid(), SIGRTMIN, value);
+
+
+
+
+			sigqueue(getppid(), r_signal, value);
 			fprintf(stderr, "CHILD: N=%i | MYPID=%i | PPID=%i | POSIXSIGNALNO=%i | VALUE=%i\n", 
-				i, getpid(), getppid(), SIGRTMIN, value.sival_int);
+				i, getpid(), getppid(), r_signal, value.sival_int);
 		}
 	} else if(pid > 0) {
 		printf("Parent: PID=%d, GID=%d\n", getpid(), getpgid(getpid()));
@@ -48,14 +69,7 @@ void run_posix_mode(int amount_of_signals) {
 void handle_queue(int signal, siginfo_t *siginfo, void *context) {
 	const char *signal_name;
 
-	switch( signal ){
-		case 34:
-			fprintf(stderr, "PARENT: N=%i | MYPID=%i | PPID=%i | POSIXSIGNALNO=%i | VALUE=%i\n", 
-				resieved_signals_count, siginfo->si_pid, getpid(), signal, siginfo->si_value.sival_int);
-			resieved_signals_count++;
-			break;
-		default:
-			fprintf( stderr, "Нераспознанный сигнал: %d\n", signal);
-			return;	
-	}
+	fprintf(stderr, "PARENT: N=%i | MYPID=%i | PPID=%i | POSIXSIGNALNO=%i | VALUE=%i\n", 
+		resieved_signals_count, siginfo->si_pid, getpid(), signal, siginfo->si_value.sival_int);
+	resieved_signals_count++;
 }

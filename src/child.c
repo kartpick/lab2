@@ -21,7 +21,7 @@ void run_child_mode() {
 		sigaction(SIGCHLD, &sa, NULL);
 		int status;
 		if (wait(&status) > 0) {
-			while(1){}
+			exit( EXIT_SUCCESS );
 		} else {
 			perror("Failed to handle child-zombie");
 			exit( EXIT_FAILURE );
