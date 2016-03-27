@@ -1,53 +1,24 @@
-27-03-16 11:03:35, NOIO
-27-03-16 11:03:36, NOIO
-PID:9691 TIME: 27-03-16 11:03:37
+28-03-16 12:03:14, NOIO
+28-03-16 12:03:15, NOIO
+PID:9890 TIME: 28-03-16 12:03:16
 --------------------
  1< 
  2< 
  >0 echo 123
 
-PID:9691 TIME: 27-03-16 11:03:38
+PID:9890 TIME: 28-03-16 12:03:17
 --------------------
  1< 123
 
  2< 
  >0 
-27-03-16 11:03:40, NOIO
-PID:9691 TIME: 27-03-16 11:03:41
+28-03-16 12:03:19, NOIO
+28-03-16 12:03:20, NOIO
+28-03-16 12:03:21, NOIO
+28-03-16 12:03:22, NOIO
+PID:9890 TIME: 28-03-16 12:03:22
 --------------------
  1< 
  2< 
- >0 ls -la
+ >0 exit
 
-PID:9691 TIME: 27-03-16 11:03:42
---------------------
- 1< total 32
-drwxrwxr-x 6 kartpick kartpick 4096 Mar 27 23:35 .
-drwxr-xr-x 4 kartpick kartpick 4096 Mar 27 13:57 ..
-drwxrwxr-x 8 kartpick kartpick 4096 Mar 10 15:52 .git
--rw-rw-r-- 1 kartpick kartpick  334 Mar 27 18:18 Makefile
--rw-rw-r-- 1 kartpick kartpick  332 Mar 10 06:38 Readme.md
-drwxrwxr-x 2 kartpick kartpick 4096 Mar 27 23:56 bin
-drwxrwxr-x 2 kartpick kartpick 4096 Mar 27 14:00 includes
--rw-rw-r-- 1 kartpick kartpick    0 Mar 27 23:56 log.txt
-drwxrwxr-x 2 kartpick kartpick 4096 Mar 27 15:03 src
-
- 2< 
- >0 
-PID:9691 TIME: 27-03-16 11:03:44
---------------------
- 1< 
- 2< 
- >0 ls
-
-PID:9691 TIME: 27-03-16 11:03:45
---------------------
- 1< Makefile
-Readme.md
-bin
-includes
-log.txt
-src
-
- 2< 
- >0 

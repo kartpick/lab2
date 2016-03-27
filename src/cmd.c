@@ -24,11 +24,16 @@ void run_cmd(char * comandStr, char * logFile) {
 	int stdInPipeFd[2];
 	int stdOutPipeFd[2];
 	int stdErrPipeFd[2];
-	f = fopen(logFile, "w");
+	if (logFile != NULL) {
+		f = fopen(logFile, "w");
 
-	if (f == NULL) {
-		fprintf(stderr, "Error opening logger file. Continue without file-logging.\n");
+		if (f == NULL) {
+			fprintf(stderr, "Error opening logger file. Continue without file-logging.\n");
+		}
 	}
+	
+
+	
 	if (pipe(stdInPipeFd) < 0) {
 		fprintf(stderr, "pipe for child-input error\n");
 		exit( EXIT_FAILURE );
@@ -116,8 +121,9 @@ void run_cmd(char * comandStr, char * logFile) {
 				time(&t);
 				timeinfo = localtime(&t);
 				strftime(buffer, 80, "%d-%m-%y %I:%m:%S", timeinfo);
-				fprintf(f, "%s, NOIO\n", buffer);
-				//fprintf(stderr, "%s, NOIO\n", buffer);
+				if (f != NULL) {
+					fprintf(f, "%s, NOIO\n", buffer);
+				}
 			}
 			else if (retval < 0) {
 				fprintf(stderr, "Select error");
@@ -132,6 +138,9 @@ void run_cmd(char * comandStr, char * logFile) {
 
 				if (FD_ISSET(STDIN_FILENO, &set)) {
 					bytes3 = read(STDIN_FILENO, data_buffer3, sizeof(data_buffer3));
+					if (strcmp(data_buffer3, "exit") == 0) {
+						exit(EXIT_SUCCESS);
+					}
 					write(stdInPipeFd[PIPE_WRITE], data_buffer3, strlen(data_buffer3) + 1);
 				}
 				if (FD_ISSET(stdOutPipeFd[PIPE_READ], &set)) {
@@ -146,13 +155,16 @@ void run_cmd(char * comandStr, char * logFile) {
 				strftime(buffer, 80, "%d-%m-%y %I:%m:%S", timeinfo);
 
 				fprintf(stderr, "<%d> 1< %s\n 2< %s\n >0 | %s\n", pid, data_buffer, data_buffer2, data_buffer3);
-				fprintf(f, "PID:%d TIME: %s\n--------------------\n 1< %s\n 2< %s\n >0 %s\n", pid, buffer, data_buffer, data_buffer2, data_buffer3);
-
+				if (f != NULL) {
+					fprintf(f, "PID:%d TIME: %s\n--------------------\n 1< %s\n 2< %s\n >0 %s\n", pid, buffer, data_buffer, data_buffer2, data_buffer3);
+				}				
 				sleep(1);
 			}
 
 			if (childIsZombie) {
-				fclose(f);
+				if (f != NULL) {
+					fclose(f);
+				}				
 				exit(1);
 			}
 		}
@@ -180,8 +192,9 @@ void handle_int(int signal, siginfo_t *siginfo, void *context) {
 
 	switch( signal ){
 		case SIGINT:
-			fclose(f);
-			fprintf(stderr, "\nCtrl+C terminated\n");
+			if (f != NULL) {
+				fclose(f);
+			}
 			exit(0);
 			break;
 		default:
