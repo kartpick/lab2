@@ -7,7 +7,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-int childIsZombie = 0;
+int childIsZombie;
 FILE *f;
 
 void run_cmd(char * comandStr, char * logFile) {
@@ -18,6 +18,7 @@ void run_cmd(char * comandStr, char * logFile) {
 	sa.sa_sigaction = &handle_child;
 	sa2.sa_flags = SA_SIGINFO;
 	sa2.sa_sigaction = &handle_int;
+	childIsZombie = 0;
 
 
 	// PIPE & FILE
@@ -154,9 +155,9 @@ void run_cmd(char * comandStr, char * logFile) {
 				timeinfo = localtime(&t);
 				strftime(buffer, 80, "%d-%m-%y %I:%m:%S", timeinfo);
 
-				fprintf(stderr, "<%d> 1< %s\n 2< %s\n >0 | %s\n", pid, data_buffer, data_buffer2, data_buffer3);
+				fprintf(stderr, "<%d> 1< %s\n 2< %s\n >0 %s\n", getpid(), data_buffer, data_buffer2, data_buffer3);
 				if (f != NULL) {
-					fprintf(f, "PID:%d TIME: %s\n--------------------\n 1< %s\n 2< %s\n >0 %s\n", pid, buffer, data_buffer, data_buffer2, data_buffer3);
+					fprintf(f, "PID:%d TIME: %s\n--------------------\n 1< %s\n 2< %s\n >0 %s\n", getpid(), buffer, data_buffer, data_buffer2, data_buffer3);
 				}				
 				sleep(1);
 			}
