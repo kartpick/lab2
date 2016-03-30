@@ -174,8 +174,6 @@ void run_cmd(char * comandStr, char * logFile) {
 }
 
 void handle_child(int signal, siginfo_t *siginfo, void *context) {
-	const char *signal_name;
-
 	switch( signal ){
 		case SIGCHLD:
 			fprintf(stderr, "%i TERMINATED WITH EXIT CODE: %i\n", siginfo->si_pid, siginfo->si_code);
@@ -188,8 +186,7 @@ void handle_child(int signal, siginfo_t *siginfo, void *context) {
 }
 
 void handle_int(int signal, siginfo_t *siginfo, void *context) {
-	const char *signal_name;
-
+	fprintf(stderr, "%s\n", "WOW");
 	switch( signal ){
 		case SIGINT:
 			if (f != NULL) {

@@ -51,6 +51,13 @@ int main(int argc, char *argv[]) {
 }
 
 void run_with_parameters() {
-	run_cmd(globalArgs.execute, globalArgs.logFile);
+	if (globalArgs.multiplex == 0) {
+		run_cmd_async(globalArgs.execute, globalArgs.logFile);
+	}
+	else {
+		run_cmd(globalArgs.execute, globalArgs.logFile);
+	}
+	
+
 	exit( EXIT_FAILURE );
 }
