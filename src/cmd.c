@@ -40,18 +40,10 @@ void run_cmd(char * comandStr, char * logFile) {
 		exit( EXIT_FAILURE );
 	}
 	if (pipe(stdOutPipeFd) < 0) {
-		close(stdInPipeFd[PIPE_READ]);
-		close(stdInPipeFd[PIPE_WRITE]);
-
 		fprintf(stderr, "pipe for child-output error");
 		exit( EXIT_FAILURE );
 	}
 	if (pipe(stdErrPipeFd) < 0) {
-		close(stdInPipeFd[PIPE_READ]);
-		close(stdInPipeFd[PIPE_WRITE]);
-		close(stdOutPipeFd[PIPE_READ]);
-		close(stdOutPipeFd[PIPE_WRITE]);
-
 		fprintf(stderr, "pipe for child-errput error");
 		exit( EXIT_FAILURE );
 	}
@@ -116,12 +108,14 @@ void run_cmd(char * comandStr, char * logFile) {
 			FD_SET(STDIN_FILENO, &set);
 			tv.tv_sec = 1;
 			tv.tv_usec = 0;
+
 			retval = select(FD_SETSIZE, &set, NULL, NULL, &tv);
 
 			if (retval == 0) {
 				time(&t);
 				timeinfo = localtime(&t);
 				strftime(buffer, 80, "%d-%m-%y %I:%m:%S", timeinfo);
+
 				if (f != NULL) {
 					fprintf(f, "%s, NOIO\n", buffer);
 				}
@@ -130,36 +124,30 @@ void run_cmd(char * comandStr, char * logFile) {
 				fprintf(stderr, "Select error");
 			}
 			else {
-				int bytes;
-				int bytes2;
-				int bytes3;
 				char data_buffer[1024] = "";
-				char data_buffer2[1024] = "";
-				char data_buffer3[1024] = "";
 
 				if (FD_ISSET(STDIN_FILENO, &set)) {
-					bytes3 = read(STDIN_FILENO, data_buffer3, sizeof(data_buffer3));
-					if (strcmp(data_buffer3, "exit") == 0) {
+					int bytes = read(STDIN_FILENO, data_buffer, sizeof(data_buffer) - 1);
+					data_buffer[bytes] = 0;
+
+					if (strcmp(data_buffer, "exit\n") == 0) {
 						exit(EXIT_SUCCESS);
 					}
-					write(stdInPipeFd[PIPE_WRITE], data_buffer3, strlen(data_buffer3) + 1);
-				}
-				if (FD_ISSET(stdOutPipeFd[PIPE_READ], &set)) {
-					bytes = read(stdOutPipeFd[PIPE_READ], data_buffer, sizeof(data_buffer) - 1);
-				}
-				if (FD_ISSET(stdErrPipeFd[PIPE_READ], &set)) {
-					bytes2 = read(stdErrPipeFd[PIPE_READ], data_buffer2, sizeof(data_buffer2));
-				}
+					write(stdInPipeFd[PIPE_WRITE], data_buffer, strlen(data_buffer));
+					print_log(">0", data_buffer, getpid());
+				} 
+				else if (FD_ISSET(stdOutPipeFd[PIPE_READ], &set)) {
+					int bytes = read(stdOutPipeFd[PIPE_READ], data_buffer, sizeof(data_buffer) - 1);
+					data_buffer[bytes] = 0;
 
-				time(&t);
-				timeinfo = localtime(&t);
-				strftime(buffer, 80, "%d-%m-%y %I:%m:%S", timeinfo);
+					print_log("1<", data_buffer, getpid());
+				} 
+				else if (FD_ISSET(stdErrPipeFd[PIPE_READ], &set)) {
+					int bytes = read(stdErrPipeFd[PIPE_READ], data_buffer, sizeof(data_buffer));
+					data_buffer[bytes] = 0;
 
-				fprintf(stderr, "<%d> 1< %s\n 2< %s\n >0 %s\n", getpid(), data_buffer, data_buffer2, data_buffer3);
-				if (f != NULL) {
-					fprintf(f, "PID:%d TIME: %s\n--------------------\n 1< %s\n 2< %s\n >0 %s\n", getpid(), buffer, data_buffer, data_buffer2, data_buffer3);
-				}				
-				sleep(1);
+					print_log("2<", data_buffer, getpid());
+				}			
 			}
 
 			if (childIsZombie) {

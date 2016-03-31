@@ -16,6 +16,8 @@ int stdErrPipeFd[2];
 int isIO;
 int childIsZombie;
 
+char data_buffer[1024] = "";
+
 void run_cmd_async(char * comandStr, char * logFile) {
 	
 
@@ -50,18 +52,10 @@ void run_cmd_async(char * comandStr, char * logFile) {
 		exit( EXIT_FAILURE );
 	}
 	if (pipe(stdOutPipeFd) < 0) {
-		close(stdInPipeFd[PIPE_READ]);
-		close(stdInPipeFd[PIPE_WRITE]);
-
 		fprintf(stderr, "pipe for child-output error");
 		exit( EXIT_FAILURE );
 	}
 	if (pipe(stdErrPipeFd) < 0) {
-		close(stdInPipeFd[PIPE_READ]);
-		close(stdInPipeFd[PIPE_WRITE]);
-		close(stdOutPipeFd[PIPE_READ]);
-		close(stdOutPipeFd[PIPE_WRITE]);
-
 		fprintf(stderr, "pipe for child-errput error");
 		exit( EXIT_FAILURE );
 	}
@@ -115,12 +109,15 @@ void run_cmd_async(char * comandStr, char * logFile) {
 		fcntl(stdOutPipeFd[PIPE_READ], F_SETOWN, getpid());
 		fcntl(stdOutPipeFd[PIPE_READ], F_SETFL, O_ASYNC | O_NONBLOCK);
 
+
 		fcntl(stdErrPipeFd[PIPE_READ], F_SETSIG, SIGRTMIN + 2);
 		fcntl(stdErrPipeFd[PIPE_READ], F_SETOWN, getpid());
-		fcntl(stdErrPipeFd[PIPE_READ], F_SETFL, O_ASYNC | O_NONBLOCK);
+		fcntl(stdErrPipeFd[PIPE_READ], F_SETFL, O_ASYNC);
+
 
 		fcntl(STDIN_FILENO, F_SETSIG, SIGRTMIN + 3);
 		fcntl(STDIN_FILENO, F_SETOWN, getpid());
+		fcntl(STDIN_FILENO, F_SETFL, O_ASYNC | O_NONBLOCK);
 
 		alarm(1);
 
@@ -136,37 +133,38 @@ void run_cmd_async(char * comandStr, char * logFile) {
 }
 
 void handle_async_sig(int signal, siginfo_t *siginfo, void *context) {
-	char data_buffer[1024] = "";
 	int bytes;
-
+	data_buffer[0] = 0;
 	if(signal == SIGRTMIN + 1) { // FD OUTPUT READ
 		isIO = 1;
 		bytes = read(stdOutPipeFd[PIPE_READ], data_buffer, sizeof(data_buffer) - 1);
+		data_buffer[bytes] = '\0';
 		print_log("1<", data_buffer, getpid());
 	}
 	else if (signal == SIGRTMIN + 2) {// FD ERRPUT READ
 		isIO = 1;
 		bytes = read(stdErrPipeFd[PIPE_READ], data_buffer, sizeof(data_buffer) - 1);
+		data_buffer[bytes] = '\0';
 		print_log("2<", data_buffer, getpid());
 	}
 	else if (signal == SIGRTMIN + 3) {// FD INPUT WRITE
 		bytes = read(STDIN_FILENO, data_buffer, sizeof(data_buffer) - 1);
-		if (strlen(data_buffer) > 0) {
+		data_buffer[bytes] = '\0';
+		if (bytes > 0) {
 			isIO = 1;
 			print_log(">0", data_buffer, getpid());
 
 			// SEND TO CHILD
-			if (strcmp(data_buffer, "exit") == 0) {
+			if (strcmp(data_buffer, "exit\n") == 0) {
 				childIsZombie = 1;
 			}
-			write(stdInPipeFd[PIPE_WRITE], data_buffer, strlen(data_buffer) + 1);
+			write(stdInPipeFd[PIPE_WRITE], data_buffer, strlen(data_buffer));
 		}
 	}
 	else {
 		fprintf( stderr, "Нераспознанный сигнал: %d\n", signal);
 		return;
 	}
-	
 }
 
 void print_log(char * route, char * msg, int pid) {
